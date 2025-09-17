@@ -1,0 +1,17 @@
+{
+	"name": "{{ name }}",
+	"created_at": "{{ created_at }}",
+	"updated_at": "{{ created_at }}",
+	"fields": [
+		{
+			"key": "index.meta.title",
+			"label": "Homepage meta title",
+			"type": "text"
+		},
+		{
+			"key": "index.meta.description",
+			"label": "Homepage meta description",
+			"type": "text"
+		}
+	]
+}

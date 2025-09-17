@@ -1,0 +1,11 @@
+/**
+ * ============================
+ * 🎨 Theme:   {{ name }}
+ * 🗓️ Created: {{ created_at }}
+ * ============================
+ */
+
+// Import all images to vite build
+import.meta.glob([
+	'../images/**',
+]);
