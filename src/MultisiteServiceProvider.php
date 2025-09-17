@@ -2,13 +2,16 @@
 
 namespace Rdcstarr\Multisite;
 
+use Rdcstarr\Multisite\Commands\OptimizeCommand;
 use Rdcstarr\Multisite\Commands\MultisiteListCommand;
-use Spatie\LaravelPackageTools\Package;
+use Rdcstarr\Multisite\Commands\OptimizeClearCommand;
+use Rdcstarr\Multisite\Commands\MultisiteQueueCommand;
+use Rdcstarr\Multisite\Commands\QueuePendingCommand;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Spatie\LaravelPackageTools\Package;
 
 class MultisiteServiceProvider extends PackageServiceProvider
 {
-
 	/**
 	 * Configure the package using Laravel Package Tools.
 	 *
@@ -23,10 +26,12 @@ class MultisiteServiceProvider extends PackageServiceProvider
 		 * More info: https://github.com/spatie/laravel-package-tools
 		 */
 		$package->name('multisite')
-			// ->hasConfigFile()
-			// ->hasCommands([
-			// 	MultisiteListCommand::class,
-			// ])
-			;
+			->hasCommands([
+				MultisiteListCommand::class,
+				MultisiteQueueCommand::class,
+				OptimizeClearCommand::class,
+				OptimizeCommand::class,
+				QueuePendingCommand::class,
+			]);
 	}
 }

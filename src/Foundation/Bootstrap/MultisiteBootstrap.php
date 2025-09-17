@@ -11,34 +11,65 @@ class MultisiteBootstrap
 {
 	/**
 	 * Bootstrap the given application.
+	 *
+	 * Bootstraps multisite functionality for the given application instance.
+	 * It initializes the MultisiteManager, determines the active site (from
+	 * the HTTP host or the console --site argument), validates the site,
+	 * loads the site's environment file if present, and binds site-specific
+	 * paths and instances into the application container.
+	 *
+	 * @param Application $app The application instance being bootstrapped.
+	 * @return void
 	 */
 	public function bootstrap(Application $app): void
 	{
 		MultisiteManager::bootstrap();
 
-		$site = $this->determineSite($app);
+		$site = $app->runningInConsole()
+			? $this->getConsoleSite()
+			: Arr::get($_SERVER, 'HTTP_HOST');
 
-		if ($site)
+		if (!$site)
 		{
-			MultisiteManager::setCurrentSite($site);
-			$this->validateSite();
-			$this->loadEnvironment();
-			$this->bindCachedConfigPath($app);
-		}
-		// If no site is determined (skip validation), we don't validate, load env, or bind config
-	}
-
-	private function determineSite(Application $app): ?string
-	{
-		if ($app->runningInConsole())
-		{
-			return $this->handleConsoleMode();
+			return;
 		}
 
-		return Arr::get($_SERVER, 'HTTP_HOST');
+		// Skip if same site already bootstrapped
+		if ($app->bound('multisite.current_site') && $app->get('multisite.current_site') === $site)
+		{
+			return;
+		}
+
+		// Validate and bootstrap site
+		MultisiteManager::setCurrentSite($site);
+
+		if (!MultisiteManager::isValid())
+		{
+			MultisiteManager::throw("Site [{$site}] doesn't exist or doesn't have a valid env configuration.");
+		}
+
+		// Load environment
+		$envFile = MultisiteManager::getBasePath() . DIRECTORY_SEPARATOR . '.env';
+		if (file_exists($envFile))
+		{
+			Dotenv::createMutable(MultisiteManager::getBasePath())->safeLoad();
+		}
+
+		// Bind paths and mark as bootstrapped
+		$app->bind('path.config.cache', fn() => MultisiteManager::getCachedConfigPath());
+		$app->instance('multisite.current_site', $site);
 	}
 
-	private function handleConsoleMode(): ?string
+	/**
+	 * Get the site name from console arguments when running in CLI.
+	 *
+	 * Extracts the --site argument from argv and enforces validation unless
+	 * validation is explicitly skipped. Throws an exception when the required
+	 * argument is not provided.
+	 *
+	 * @return string|null The site identifier, or null when validation is skipped
+	 */
+	private function getConsoleSite(): ?string
 	{
 		if (MultisiteManager::skipValidation())
 		{
@@ -53,27 +84,5 @@ class MultisiteBootstrap
 		}
 
 		return $site;
-	}
-
-	private function validateSite(): void
-	{
-		if (!MultisiteManager::isValid())
-		{
-			MultisiteManager::throw(
-				"Site [" . MultisiteManager::$currentSite . "] doesn't exist or doesn't have a valid env configuration."
-			);
-		}
-	}
-
-	private function loadEnvironment(): void
-	{
-		$dotenv = Dotenv::createMutable(MultisiteManager::getBasePath());
-		$dotenv->load();
-		$dotenv->required(['APP_URL', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD']);
-	}
-
-	private function bindCachedConfigPath(Application $app): void
-	{
-		$app->bind('path.config.cache', fn() => MultisiteManager::getCachedConfigPath());
 	}
 }

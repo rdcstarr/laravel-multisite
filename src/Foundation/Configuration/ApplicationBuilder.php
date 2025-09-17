@@ -4,6 +4,11 @@ namespace Rdcstarr\Multisite\Foundation\Configuration;
 
 class ApplicationBuilder extends \Illuminate\Foundation\Configuration\ApplicationBuilder
 {
+	/**
+	 * Register the HTTP and Console Kernels.
+	 *
+	 * @return $this
+	 */
 	public function withKernels(): static
 	{
 		$this->app->singleton(

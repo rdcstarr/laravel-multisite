@@ -9,18 +9,24 @@ class MultisiteListCommand extends Command
 {
 	/**
 	 * The name and signature of the console command.
+	 *
+	 * @var string
 	 */
-	protected $signature = 'multisite-core:list';
+	protected $signature = 'multisite:list';
 
 	/**
 	 * The console command description.
+	 *
+	 * @var string
 	 */
 	protected $description = 'List all available sites or show the current active site';
 
 	/**
 	 * Execute the console command.
+	 *
+	 * @return void
 	 */
-	public function handle()
+	public function handle(): void
 	{
 		$sites = collect(MultisiteManager::all());
 

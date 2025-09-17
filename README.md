@@ -9,14 +9,7 @@ A powerful and flexible Laravel package for multisite management, each site with
 
 ## ✨ Features
 
-- 🎨 **Easy Theme Management** - Add, list, and remove themes with simple Artisan commands
-- ⚡ **Vite Integration** - Full Vite support with hot reload and optimized builds
-- 🔄 **Inline Asset Rendering** - Render CSS/JS assets inline for performance optimization
-- 📁 **Flexible Directory Structure** - Customize theme directories via configuration
-- 🎯 **Global Helper Functions** - Access themes anywhere with the `theme()` helper
-- 🧩 **Blade Directives** - Convenient Blade directives for theme integration
-- 🚀 **Redis Caching** - Optimized performance with Redis caching support
-- 📦 **Auto-Discovery** - Automatic service provider registration
+- 🧩 **Multisite** - Manage multiple sites with separate databases and configurations.
 
 ## 📦 Installation
 

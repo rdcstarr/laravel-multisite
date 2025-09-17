@@ -5,6 +5,7 @@ namespace Rdcstarr\Multisite;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Env;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -59,7 +60,10 @@ class MultisiteManager
 		'sail:',
 
 		// Multisite core commands
-		'multisite-core:',
+		'multisite', 'multisite:',
+
+		// Optimize commands
+		'optimize',
 	];
 
 	public static ?string $currentSite = null;
@@ -67,30 +71,32 @@ class MultisiteManager
 	public static ?string $basePath = null;
 	public static ?string $publicPath = null;
 
+	/**
+	 * Initialize multisite environment configuration and paths.
+	 *
+	 * @return void
+	 */
 	public static function bootstrap(): void
 	{
-		if (empty($_ENV['MULTISITE']) || !is_array($_ENV['MULTISITE']))
+		if (empty($_SERVER['MULTISITE']) || !is_array($_SERVER['MULTISITE']))
 		{
-			self::throw("MULTISITE environment variable is not defined.\nPlease define in your app bootstrapping file.");
+			self::throw("MULTISITE environment variable is not defined.");
 		}
 
-		if (empty($_ENV['MULTISITE']['production']) || !is_array($_ENV['MULTISITE']['production']))
+		$envKey = Env::get('APP_ENV') === 'local' ? 'local' : 'production';
+
+		if (empty($_SERVER['MULTISITE'][$envKey]) || !is_array($_SERVER['MULTISITE'][$envKey]))
 		{
-			self::throw("MULTISITE production environment variable is not defined.\nPlease define in your app bootstrapping file.");
+			// self::throw("MULTISITE.{$envKey} environment variable is not defined.");
 		}
 
-		if (empty($_ENV['MULTISITE']['local']) || !is_array($_ENV['MULTISITE']['local']))
-		{
-			self::throw("MULTISITE local environment variable is not defined.\nPlease define in your app bootstrapping file.");
-		}
-
-		$environment = $_ENV['APP_ENV'] === 'local' ? $_ENV['MULTISITE']['local'] : $_ENV['MULTISITE']['production'];
+		$environment = $_SERVER['MULTISITE'][$envKey];
 
 		foreach (['sites_path', 'base_path', 'public_path'] as $key)
 		{
 			if (empty($environment[$key]))
 			{
-				self::throw("MULTISITE.{$key} is not defined.\nPlease define in your app bootstrapping file.");
+				self::throw("MULTISITE.{$envKey}.{$key} is not defined.");
 			}
 
 			$property        = Str::camel($key);
@@ -98,17 +104,26 @@ class MultisiteManager
 		}
 	}
 
+	/**
+	 * Set the current active site after parsing the domain.
+	 *
+	 * @param string $site The incoming site domain or host string
+	 * @return void
+	 */
 	public static function setCurrentSite(string $site): void
 	{
 		self::$currentSite = self::parseDomain($site);
 	}
 
 	/**
-	 * Checks if a command should skip site validation
+	 * Determine whether the given command should bypass site validation.
+	 *
+	 * @param string|null $command The command name or signature to check
+	 * @return bool True if validation should be skipped, false otherwise
 	 */
-	public static function skipValidation(): bool
+	public static function skipValidation(?string $command = null): bool
 	{
-		$command = $_SERVER['argv'][1] ?? 'artisan';
+		$command ??= $_SERVER['argv'][1] ?? 'artisan';
 
 		if (empty($command) || $command === 'artisan')
 		{
@@ -117,16 +132,18 @@ class MultisiteManager
 
 		$skipCommands = collect(static::SKIP_VALIDATION);
 
-		if (!empty($_ENV["MULTISITE"]["SKIP_VALIDATION"]) && is_array($_ENV["MULTISITE"]["SKIP_VALIDATION"]))
+		if (!empty($_SERVER["MULTISITE"]["SKIP_VALIDATION"]) && is_array($_SERVER["MULTISITE"]["SKIP_VALIDATION"]))
 		{
-			$skipCommands = $skipCommands->merge($_ENV["MULTISITE"]["SKIP_VALIDATION"]);
+			$skipCommands = $skipCommands->merge($_SERVER["MULTISITE"]["SKIP_VALIDATION"]);
 		}
 
 		return $skipCommands->contains(fn($skip) => Str::startsWith($command, $skip));
 	}
 
 	/**
-	 * Extracts the --site argument from an array of arguments
+	 * Extract the --site argument from the CLI arguments array.
+	 *
+	 * @return string|null The site value if present, or null
 	 */
 	public static function extractSiteFromArgv(): ?string
 	{
@@ -144,7 +161,10 @@ class MultisiteManager
 	}
 
 	/**
-	 * Parses the domain and returns the canonical form
+	 * Normalize and parse a domain into its canonical form.
+	 *
+	 * @param string $domain The domain or host string to parse
+	 * @return string The parsed canonical domain
 	 */
 	public static function parseDomain(string $domain): string
 	{
@@ -156,7 +176,10 @@ class MultisiteManager
 	}
 
 	/**
-	 * Returns the private path of a site
+	 * Get the private (base) path for a given site.
+	 *
+	 * @param string|null $site Optional site identifier, defaults to current site
+	 * @return string The site's base path
 	 */
 	public static function getBasePath(?string $site = null): string
 	{
@@ -170,7 +193,10 @@ class MultisiteManager
 	}
 
 	/**
-	 * Returns the public path of a site
+	 * Get the public path for a given site.
+	 *
+	 * @param string|null $site Optional site identifier, defaults to current site
+	 * @return string The site's public path
 	 */
 	public static function getPublicPath(?string $site = null): string
 	{
@@ -184,7 +210,9 @@ class MultisiteManager
 	}
 
 	/**
-	 * Sets a custom cached config path
+	 * Build and return the path to the cached configuration file.
+	 *
+	 * @return string The cached config file path
 	 */
 	public static function getCachedConfigPath(): string
 	{
@@ -196,7 +224,10 @@ class MultisiteManager
 	}
 
 	/**
-	 * Checks if a site is valid (has .env)
+	 * Determine whether the specified site has a valid .env file.
+	 *
+	 * @param string|null $site Optional site identifier to validate
+	 * @return bool True if the site's .env exists, false otherwise
 	 */
 	public static function isValid(?string $site = null): bool
 	{
@@ -205,7 +236,9 @@ class MultisiteManager
 	}
 
 	/**
-	 * Returns all available sites
+	 * Retrieve a list of all available sites.
+	 *
+	 * @return array<int,string> Array of site directory names
 	 */
 	public static function all(): array
 	{
@@ -216,6 +249,12 @@ class MultisiteManager
 			->all();
 	}
 
+	/**
+	 * Display an error and terminate execution.
+	 *
+	 * @param string|null $message Optional error message to display
+	 * @return never
+	 */
 	public static function throw(?string $message = null): never
 	{
 		if (self::isCli())
@@ -230,6 +269,12 @@ class MultisiteManager
 		exit(self::isCli() ? Command::SUCCESS : 1);
 	}
 
+	/**
+	 * Render a styled CLI error box and output the message.
+	 *
+	 * @param string|null $message Message to display inside the error box
+	 * @return void
+	 */
 	private static function displayCliError(?string $message): void
 	{
 		$output     = new OutputStyle(new ArgvInput(), new ConsoleOutput());
@@ -244,11 +289,22 @@ class MultisiteManager
 		]);
 	}
 
+	/**
+	 * Determine if the current runtime is the CLI sapi.
+	 *
+	 * @return bool True when running in CLI or phpdbg
+	 */
 	public static function isCli(): bool
 	{
 		return php_sapi_name() === 'cli' || php_sapi_name() === 'phpdbg';
 	}
 
+	/**
+	 * Build a filesystem path from a string or array of parts.
+	 *
+	 * @param string|array $path Path string or array of path segments
+	 * @return string The assembled filesystem path
+	 */
 	private static function buildPath(string|array $path): string
 	{
 		if (is_string($path))
@@ -270,7 +326,9 @@ class MultisiteManager
 	}
 
 	/**
-	 * Gets the Filesystem instance
+	 * Get a new Filesystem instance.
+	 *
+	 * @return Filesystem
 	 */
 	protected static function filesystem(): Filesystem
 	{
