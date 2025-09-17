@@ -1,11 +1,11 @@
-# Laravel Themes
+# Laravel Multisite
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/rdcstarr/laravel-multisite.svg?style=flat-square)](https://packagist.org/packages/rdcstarr/laravel-multisite)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/rdcstarr/laravel-multisite/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/rdcstarr/laravel-multisite/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/rdcstarr/laravel-multisite/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/rdcstarr/laravel-multisite/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/rdcstarr/laravel-multisite.svg?style=flat-square)](https://packagist.org/packages/rdcstarr/laravel-multisite)
 
-A powerful and flexible Laravel package for theme management with seamless Vite integration.
+A powerful and flexible Laravel package for multisite management, each site with different database and .env.
 
 ## ✨ Features
 
