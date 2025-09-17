@@ -2,9 +2,7 @@
 
 namespace Rdcstarr\Multisite\Foundation\Http;
 
-use Illuminate\Foundation\Http\Kernel as HttpKernel;
-
-class Kernel extends HttpKernel
+class Kernel extends \Illuminate\Foundation\Http\Kernel
 {
 	protected function bootstrappers(): array
 	{
