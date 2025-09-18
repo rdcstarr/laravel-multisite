@@ -70,6 +70,16 @@ The package provides dedicated Artisan commands for managing settings directly f
 php artisan multisite:list
 ```
 
+#### Run migrations for all sites
+```bash
+php artisan multisite:migrate [--force] [--seed] [--seeder]
+```
+
+#### Run migrations fresh for all sites
+```bash
+php artisan multisite:migrate-fresh [--force] [--seed] [--seeder]
+```
+
 #### Queue worker for sites
 ```bash
 php artisan multisite:queue
@@ -78,6 +88,11 @@ php artisan multisite:queue
 #### Scheduler run for all sites
 ```bash
 php artisan multisite:schedule-run
+```
+
+#### Seed database for all sites
+```bash
+php artisan multisite:seed [--force] [--class]
 ```
 
 ## 🧪 Testing

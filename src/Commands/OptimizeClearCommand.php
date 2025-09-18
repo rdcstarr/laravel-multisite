@@ -5,6 +5,7 @@ namespace Rdcstarr\Multisite\Commands;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Rdcstarr\Multisite\MultisiteManager;
@@ -16,7 +17,7 @@ class OptimizeClearCommand extends Command
 	 *
 	 * @var string
 	 */
-	protected $signature = 'optimize:clear {--site= : Specify the site to clear cache}';
+	protected $signature = 'optimize:clear {--site : Specify the site to clear cache}';
 
 	/**
 	 * The console command description.
@@ -48,40 +49,13 @@ class OptimizeClearCommand extends Command
 					MultisiteManager::throw("Site [{$site}] doesn't exist or doesn't have a valid env configuration.");
 				}
 
-				$this->components->info("Clear configuration cache for $site.");
-
-				try
-				{
-					$this->components->task($site, fn() => match (true)
-					{
-						!MultisiteManager::isValid($site) => throw new Exception("Site invalid"),
-						default => Artisan::call('config:cache', ['--site' => $site])
-					});
-				}
-				catch (Exception $e)
-				{
-					//
-				}
+				$this->components->info("Clearing configuration cache for $site.");
+				$this->clearCacheSiteConfiguration($site);
 			}
 			else
 			{
-				$this->components->info("Clear configuration cache for {$sites->count()} " . Str::plural('site', $sites->count()) . '.');
-
-				$sites->each(function ($site)
-				{
-					try
-					{
-						$this->components->task($site, fn() => match (true)
-						{
-							!MultisiteManager::isValid($site) => throw new Exception("Site invalid"),
-							default => Artisan::call('config:clear', ['--site' => $site])
-						});
-					}
-					catch (Exception $e)
-					{
-						//
-					}
-				});
+				$this->components->info("Clearing configuration cache for {$sites->count()} " . Str::plural('site', $sites->count()) . '.');
+				$sites->each(fn($site) => $this->clearCacheSiteConfiguration($site));
 			}
 		}
 
@@ -94,6 +68,28 @@ class OptimizeClearCommand extends Command
 		});
 
 		$this->newLine();
+	}
+
+	/**
+	 * Clear cache configuration for a specific site.
+	 *
+	 * @param string $site
+	 * @return void
+	 */
+	protected function clearCacheSiteConfiguration(string $site): void
+	{
+		try
+		{
+			$this->components->task($site, fn() => match (true)
+			{
+				!MultisiteManager::isValid($site) => throw new Exception("Site invalid"),
+				default => Process::run('artisan config:clear --site=' . escapeshellarg($site))->throw()
+			});
+		}
+		catch (Exception $e)
+		{
+			//
+		}
 	}
 
 	/**

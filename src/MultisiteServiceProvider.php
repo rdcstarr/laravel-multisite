@@ -2,7 +2,10 @@
 
 namespace Rdcstarr\Multisite;
 
+use Rdcstarr\Multisite\Commands\MultisiteMigrateCommand;
+use Rdcstarr\Multisite\Commands\MultisiteMigrateFreshCommand;
 use Rdcstarr\Multisite\Commands\MultisiteScheduleRunCommand;
+use Rdcstarr\Multisite\Commands\MultisiteSeedCommand;
 use Rdcstarr\Multisite\Commands\OptimizeCommand;
 use Rdcstarr\Multisite\Commands\MultisiteListCommand;
 use Rdcstarr\Multisite\Commands\OptimizeClearCommand;
@@ -29,8 +32,11 @@ class MultisiteServiceProvider extends PackageServiceProvider
 		$package->name('multisite')
 			->hasCommands([
 				MultisiteListCommand::class,
+				MultisiteMigrateCommand::class,
+				MultisiteMigrateFreshCommand::class,
 				MultisiteQueueCommand::class,
 				MultisiteScheduleRunCommand::class,
+				MultisiteSeedCommand::class,
 				OptimizeClearCommand::class,
 				OptimizeCommand::class,
 				QueuePendingCommand::class,

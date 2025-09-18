@@ -2,12 +2,9 @@
 
 namespace Rdcstarr\Multisite\Commands;
 
-use Artisan;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Facades\Queue;
 use Rdcstarr\Multisite\MultisiteManager;
 
 class MultisiteScheduleRunCommand extends Command
@@ -51,7 +48,7 @@ class MultisiteScheduleRunCommand extends Command
 					$this->components->task($site, fn() => match (true)
 					{
 						!MultisiteManager::isValid($site) => throw new Exception("Site invalid"),
-						default => Artisan::call('schedule:run', ['--site' => $site])
+						default => Process::run('artisan schedule:run --site=' . escapeshellarg($site))->throw()
 					});
 				}
 				catch (Exception $e)
@@ -59,6 +56,8 @@ class MultisiteScheduleRunCommand extends Command
 					//
 				}
 			});
+
+			$this->newLine();
 		}
 	}
 }

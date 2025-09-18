@@ -13,7 +13,7 @@ class QueuePendingCommand extends Command
 	 *
 	 * @var string
 	 */
-	protected $signature = 'queue:pending {--failed : Show failed jobs instead of pending jobs}';
+	protected $signature = 'queue:pending';
 
 	/**
 	 * The console command description.

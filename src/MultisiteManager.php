@@ -294,7 +294,7 @@ class MultisiteManager
 			http_response_code(500);
 		}
 
-		exit(self::isCli() ? Command::SUCCESS : 1);
+		exit(1);
 	}
 
 	/**
