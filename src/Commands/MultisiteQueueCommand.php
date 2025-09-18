@@ -2,7 +2,6 @@
 
 namespace Rdcstarr\Multisite\Commands;
 
-use App\Services\SiteService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
@@ -11,6 +10,11 @@ use Rdcstarr\Multisite\MultisiteManager;
 
 class MultisiteQueueCommand extends Command
 {
+	/**
+	 * The name and signature of the console command.
+	 *
+	 * @var string
+	 */
 	protected $signature = 'multisite:queue
         {--concurrency=10 : Total number of concurrent workers}
         {--min-per-site=1 : Minimum workers per active site}
@@ -23,6 +27,11 @@ class MultisiteQueueCommand extends Command
         {--mute : Run without output}
     ';
 
+	/**
+	 * The console command description.
+	 *
+	 * @var string
+	 */
 	protected $description = 'Dynamic load-balanced queue workers for multi-site system';
 
 	private const int MONITOR_INTERVAL = 5;
@@ -33,7 +42,12 @@ class MultisiteQueueCommand extends Command
 	private bool $shouldRun = true;
 	private bool $mute = false;
 
-	public function handle(): int
+	/**
+	 * Execute the console command.
+	 *
+	 * @return void
+	 */
+	public function handle(): void
 	{
 		$this->mute         = $this->option('mute');
 		$this->totalWorkers = (int) $this->option('concurrency');
@@ -41,10 +55,16 @@ class MultisiteQueueCommand extends Command
 		$this->registerSignalHandlers();
 		$this->displayConfiguration();
 		$this->runDynamicLoadBalancer();
-
-		return self::SUCCESS;
 	}
 
+	/**
+	 * Register signal handlers for graceful shutdown.
+	 *
+	 * This method configures PCNTL async signals and installs handlers for
+	 * SIGTERM and SIGINT to gracefully stop running worker processes.
+	 *
+	 * @return void
+	 */
 	private function registerSignalHandlers(): void
 	{
 		if (!extension_loaded('pcntl'))
@@ -68,6 +88,14 @@ class MultisiteQueueCommand extends Command
 		pcntl_signal(SIGINT, $shutdownHandler);
 	}
 
+	/**
+	 * Display the current configuration to the console.
+	 *
+	 * Shows a table with strategy, total sites, worker limits and
+	 * rebalance interval so operators can verify settings at startup.
+	 *
+	 * @return void
+	 */
 	private function displayConfiguration(): void
 	{
 		$sites = $this->getActiveSites();
@@ -85,6 +113,14 @@ class MultisiteQueueCommand extends Command
 		$this->newLine();
 	}
 
+	/**
+	 * Main loop for the dynamic load balancer.
+	 *
+	 * Periodically rebalances worker allocation based on queued job counts
+	 * and monitors worker processes, running until shutdown is requested.
+	 *
+	 * @return void
+	 */
 	private function runDynamicLoadBalancer(): void
 	{
 		$this->output('🚀 Starting dynamic load balancer...', 'info');
@@ -107,6 +143,14 @@ class MultisiteQueueCommand extends Command
 		}
 	}
 
+	/**
+	 * Trigger a rebalance of workers across sites.
+	 *
+	 * Retrieves current queue sizes, computes a new allocation and
+	 * adjusts workers accordingly. Optionally displays the new allocation.
+	 *
+	 * @return void
+	 */
 	private function rebalanceWorkers(): void
 	{
 		$sites      = $this->getActiveSites();
@@ -122,11 +166,28 @@ class MultisiteQueueCommand extends Command
 		}
 	}
 
+	/**
+	 * Retrieve the list of active sites eligible for worker allocation.
+	 *
+	 * Filters the registered sites via the MultisiteManager to exclude
+	 * invalid or inactive site entries.
+	 *
+	 * @return Collection<string> Collection of site identifiers
+	 */
 	private function getActiveSites(): Collection
 	{
 		return collect(MultisiteManager::all())->filter(fn(string $site) => MultisiteManager::isValid($site));
 	}
 
+	/**
+	 * Get queue statistics for the provided sites.
+	 *
+	 * Executes a batched, parallel check for pending/failed jobs per site
+	 * and returns an associative array of statistics for each site.
+	 *
+	 * @param Collection<string> $sites Collection of site identifiers to inspect
+	 * @return array<string,array{pending:int,failed:int,total:int,priority:float}>
+	 */
 	private function getQueueSizes(Collection $sites): array
 	{
 		$sizes     = [];
@@ -201,17 +262,40 @@ class MultisiteQueueCommand extends Command
 		return $sizes;
 	}
 
+	/**
+	 * Return an empty stats structure for a site with no data.
+	 *
+	 * @return array{pending:int,failed:int,total:int,priority:int}
+	 */
 	private function getEmptyStats(): array
 	{
 		return ['pending' => 0, 'failed' => 0, 'total' => 0, 'priority' => 0];
 	}
 
+	/**
+	 * Compute a priority score for a site based on pending and failed jobs.
+	 *
+	 * Failed jobs are weighted more heavily to prioritize recovery.
+	 *
+	 * @param int $pending Number of pending jobs
+	 * @param int $failed Number of failed jobs
+	 * @return float Computed priority score
+	 */
 	private function calculatePriority(int $pending, int $failed): float
 	{
 		// Priority algorithm: pending jobs + failed jobs with higher weight
 		return $pending + $failed * 2;
 	}
 
+	/**
+	 * Calculate how many workers should be allocated to each site.
+	 *
+	 * Uses site priority scores to proportionally allocate the total
+	 * available workers while respecting min/max per-site constraints.
+	 *
+	 * @param array<string,array{priority:float,total:int}> $queueSizes Input statistics keyed by site
+	 * @return array<string,int> Mapping of site => target worker count
+	 */
 	private function calculateWorkerAllocation(array $queueSizes): array
 	{
 		$allocation    = [];
@@ -277,6 +361,15 @@ class MultisiteQueueCommand extends Command
 		return $allocation;
 	}
 
+	/**
+	 * Reconcile running workers with the target allocation.
+	 *
+	 * Stops workers for sites not present in the allocation, starts new
+	 * workers where required and stops excess workers for sites with too many.
+	 *
+	 * @param array<string,int> $allocation Desired worker counts per site
+	 * @return void
+	 */
 	private function adjustWorkers(array $allocation): void
 	{
 		// Stop workers for sites not in allocation
@@ -311,6 +404,16 @@ class MultisiteQueueCommand extends Command
 		}
 	}
 
+	/**
+	 * Start a new worker process for a given site.
+	 *
+	 * Spawns a PHP process running the Laravel queue worker with environment
+	 * variables identifying the site and worker id.
+	 *
+	 * @param string $site Site identifier for which to start the worker
+	 * @param int $index Index used to compose a unique worker id
+	 * @return void
+	 */
 	private function startWorker(string $site, int $index): void
 	{
 		$workerId = "{$site}-{$index}";
@@ -332,6 +435,14 @@ class MultisiteQueueCommand extends Command
 		$this->output("  ✅ Started worker {$workerId}", 'line');
 	}
 
+	/**
+	 * Stop a single worker process by its identifier.
+	 *
+	 * Signals the process to terminate and removes it from the tracked list.
+	 *
+	 * @param string $workerId Identifier of the worker to stop
+	 * @return void
+	 */
 	private function stopWorker(string $workerId): void
 	{
 		if (!isset($this->workers[$workerId]))
@@ -347,6 +458,12 @@ class MultisiteQueueCommand extends Command
 		$this->output("  ❌ Stopped worker {$workerId}", 'line');
 	}
 
+	/**
+	 * Count the number of workers currently running for a site.
+	 *
+	 * @param string $site Site identifier
+	 * @return int Number of workers for the site
+	 */
 	private function getWorkerCountForSite(string $site): int
 	{
 		return count(array_filter(
@@ -355,6 +472,16 @@ class MultisiteQueueCommand extends Command
 		));
 	}
 
+	/**
+	 * Stop a given number of excess workers for a specific site.
+	 *
+	 * Stops the most recently started workers for the site until the
+	 * requested count has been removed.
+	 *
+	 * @param string $site Site identifier
+	 * @param int $count Number of workers to stop
+	 * @return void
+	 */
 	private function stopExcessWorkersForSite(string $site, int $count): void
 	{
 		$siteWorkers = array_filter(
@@ -369,6 +496,14 @@ class MultisiteQueueCommand extends Command
 		}
 	}
 
+	/**
+	 * Monitor worker processes and clean up any that have exited.
+	 *
+	 * Logs unexpected exits and removes dead processes from the internal
+	 * registry so they can be restarted during the next rebalance.
+	 *
+	 * @return void
+	 */
 	private function monitorWorkers(): void
 	{
 		foreach ($this->workers as $workerId => $process)
@@ -381,6 +516,15 @@ class MultisiteQueueCommand extends Command
 		}
 	}
 
+	/**
+	 * Display the current allocation to the console.
+	 *
+	 * Prints a human-readable list of sites and their allocated worker counts
+	 * and shows the total active workers.
+	 *
+	 * @param array<string,int> $allocation Allocation mapping site => worker count
+	 * @return void
+	 */
 	private function displayAllocation(array $allocation): void
 	{
 		$this->line('📋 Current allocation:');
@@ -392,6 +536,14 @@ class MultisiteQueueCommand extends Command
 		$this->newLine();
 	}
 
+	/**
+	 * Stop all running workers, attempting graceful shutdown first.
+	 *
+	 * Signals each worker to terminate and waits for a short timeout before
+	 * force-killing any remaining processes.
+	 *
+	 * @return void
+	 */
 	private function stopAllWorkers(): void
 	{
 		foreach ($this->workers as $workerId => $process)
@@ -430,6 +582,16 @@ class MultisiteQueueCommand extends Command
 		$this->output('✅ All workers stopped', 'info');
 	}
 
+	/**
+	 * Console output helper that respects the mute option.
+	 *
+	 * Routes messages to the appropriate console method based on the
+	 * specified message type (info, warn, error, line).
+	 *
+	 * @param string $message Message text to display
+	 * @param string $type Output type (info|warn|error|line)
+	 * @return void
+	 */
 	private function output(string $message, string $type = 'line'): void
 	{
 		if ($this->mute)

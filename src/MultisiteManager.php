@@ -18,6 +18,8 @@ class MultisiteManager
 
 	/**
 	 * List of commands that do not require site validation
+	 *
+	 * @var array
 	 */
 	protected const array SKIP_VALIDATION = [
 		// General/help commands
@@ -54,21 +56,47 @@ class MultisiteManager
 		'debugbar:clear',
 
 		// Scheduling commands (without DB)
-		'schedule:run',
+		// 'schedule:run',
 
 		// Docker/Sail commands
 		'sail:',
 
-		// Multisite core commands
+		// Multisite commands
 		'multisite', 'multisite:',
+
+		// Core commands
+		'core:',
 
 		// Optimize commands
 		'optimize',
 	];
 
+	/**
+	 * The current active site identifier.
+	 *
+	 * @var string|null
+	 */
 	public static ?string $currentSite = null;
+
+	/**
+	 * Paths configuration
+	 *
+	 * @var string|null
+	 */
 	public static ?string $sitesPath = null;
+
+	/**
+	 * The base (private) path within each site directory.
+	 *
+	 * @var string|null
+	 */
 	public static ?string $basePath = null;
+
+	/**
+	 * The public path within each site directory.
+	 *
+	 * @var string|null
+	 */
 	public static ?string $publicPath = null;
 
 	/**
@@ -87,7 +115,7 @@ class MultisiteManager
 
 		if (empty($_SERVER['MULTISITE'][$envKey]) || !is_array($_SERVER['MULTISITE'][$envKey]))
 		{
-			// self::throw("MULTISITE.{$envKey} environment variable is not defined.");
+			self::throw("MULTISITE.{$envKey} environment variable is not defined.");
 		}
 
 		$environment = $_SERVER['MULTISITE'][$envKey];

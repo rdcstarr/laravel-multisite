@@ -49,11 +49,6 @@ class MultisiteBootstrap
 		}
 
 		// Load environment
-		// $envFile = MultisiteManager::getBasePath() . DIRECTORY_SEPARATOR . '.env';
-		// if (file_exists($envFile))
-		// {
-		// 	Dotenv::createMutable(MultisiteManager::getBasePath())->safeLoad();
-		// }
 		$dotenv = Dotenv::createMutable(MultisiteManager::getBasePath());
 		$dotenv->load();
 		$dotenv->required(['APP_URL', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD']);

@@ -24,6 +24,8 @@ class Kernel extends \Illuminate\Foundation\Console\Kernel
 
 	/**
 	 * Get the Artisan application instance.
+	 *
+	 * @return \Rdcstarr\Multisite\Foundation\Console\Application
 	 */
 	protected function getArtisan(): Application
 	{
@@ -44,8 +46,13 @@ class Kernel extends \Illuminate\Foundation\Console\Kernel
 
 	/**
 	 * Run an Artisan console command by name.
+	 *
+	 * @param string $command
+	 * @param array $parameters
+	 * @param \Symfony\Component\Console\Output\OutputInterface|null $outputBuffer
+	 * @return int
 	 */
-	public function call($command, array $parameters = [], $outputBuffer = null)
+	public function call($command, array $parameters = [], $outputBuffer = null): int
 	{
 		// Handle multisite site switch if needed
 		if (isset($parameters['--site']) && !empty($parameters['--site']))
@@ -75,7 +82,12 @@ class Kernel extends \Illuminate\Foundation\Console\Kernel
 		return $this->getArtisan()->call($command, $parameters, $outputBuffer);
 	}
 
-	protected function shouldDiscoverCommands()
+	/**
+	 * Determine if we should discover commands.
+	 *
+	 * @return bool
+	 */
+	protected function shouldDiscoverCommands(): bool
 	{
 		if (get_class($this) === __CLASS__)
 		{

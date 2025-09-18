@@ -1,3 +1,3 @@
 # Changelog
 
-All notable changes to `laravel-themes` will be documented in this file.
+All notable changes to `laravel-multisite` will be documented in this file.

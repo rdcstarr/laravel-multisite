@@ -2,6 +2,7 @@
 
 namespace Rdcstarr\Multisite;
 
+use Rdcstarr\Multisite\Commands\MultisiteScheduleRunCommand;
 use Rdcstarr\Multisite\Commands\OptimizeCommand;
 use Rdcstarr\Multisite\Commands\MultisiteListCommand;
 use Rdcstarr\Multisite\Commands\OptimizeClearCommand;
@@ -29,6 +30,7 @@ class MultisiteServiceProvider extends PackageServiceProvider
 			->hasCommands([
 				MultisiteListCommand::class,
 				MultisiteQueueCommand::class,
+				MultisiteScheduleRunCommand::class,
 				OptimizeClearCommand::class,
 				OptimizeCommand::class,
 				QueuePendingCommand::class,
