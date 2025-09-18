@@ -17,7 +17,7 @@ class OptimizeCommand extends Command
 	 *
 	 * @var string
 	 */
-	protected $signature = 'optimize {--site : Specify the site to optimize}';
+	protected $signature = 'optimize {--site= : Specify the site to optimize}';
 
 	/**
 	 * The console command description.

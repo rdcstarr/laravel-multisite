@@ -17,7 +17,7 @@ class OptimizeClearCommand extends Command
 	 *
 	 * @var string
 	 */
-	protected $signature = 'optimize:clear {--site : Specify the site to clear cache}';
+	protected $signature = 'optimize:clear {--site= : Specify the site to clear cache}';
 
 	/**
 	 * The console command description.
