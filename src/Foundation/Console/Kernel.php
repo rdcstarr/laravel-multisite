@@ -74,4 +74,13 @@ class Kernel extends \Illuminate\Foundation\Console\Kernel
 
 		return $this->getArtisan()->call($command, $parameters, $outputBuffer);
 	}
+
+	protected function shouldDiscoverCommands()
+	{
+		if (get_class($this) === __CLASS__)
+		{
+			return true;
+		}
+		return parent::shouldDiscoverCommands();
+	}
 }
