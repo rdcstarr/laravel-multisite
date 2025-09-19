@@ -21,7 +21,7 @@ class MultisiteMigrateFreshCommand extends Command
 	protected $signature = 'multisite:migrate-fresh
 		{--force : Force the operation to run when in production}
 		{--seed : Indicates if the seed task should be re-run}
-		{--seeder : The class name of the root seeder}
+		{--seeder= : The class name of the root seeder}
 	';
 
 	/**

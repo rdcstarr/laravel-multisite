@@ -20,7 +20,7 @@ class MultisiteSeedCommand extends Command
 	 */
 	protected $signature = 'multisite:seed
 		{--force : Force the operation to run when in production}
-		{--class : The class name of the root seeder}
+		{--class= : The class name of the root seeder}
 	';
 
 	/**
