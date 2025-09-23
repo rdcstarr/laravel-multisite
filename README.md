@@ -108,3 +108,6 @@ composer test
 
 ## 📜 License
  - [License](LICENSE.md) for more information. ⚖️
+
+## ToDo
+- [] Change single and daily logs to base path like `/home/admin/web/{site.tld}/private/logs/laravel.log`
