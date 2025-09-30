@@ -83,7 +83,7 @@ class OptimizeCommand extends Command
 			$this->components->task($site, fn() => match (true)
 			{
 				!MultisiteManager::isValid($site) => throw new Exception("Site invalid"),
-				default => Process::run('artisan config:cache --site=' . escapeshellarg($site))->throw()
+				default => Process::run('artisan config:cache --site=' . escapeshellarg($site) . ' && artisan route:cache --site=' . escapeshellarg($site))->throw()
 			});
 		}
 		catch (Exception $e)
@@ -101,7 +101,6 @@ class OptimizeCommand extends Command
 	{
 		return [
 			'events' => 'event:cache',
-			'routes' => 'route:cache',
 			'views'  => 'view:cache',
 			...ServiceProvider::$optimizeCommands,
 		];

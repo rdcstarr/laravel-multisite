@@ -38,7 +38,7 @@ class MultisiteManager
 		'down', 'up',
 
 		// Routing commands
-		'route:',
+		// 'route:',
 
 		// Code generation commands
 		'make:',
@@ -248,6 +248,20 @@ class MultisiteManager
 			self::getBasePath(),
 			'cache',
 			'config.php',
+		]);
+	}
+
+	/**
+	 * Build and return the path to the cached configuration file.
+	 *
+	 * @return string The cached config file path
+	 */
+	public static function getCachedRoutesPath(): string
+	{
+		return self::buildPath([
+			self::getBasePath(),
+			'cache',
+			'routes-v7.php',
 		]);
 	}
 

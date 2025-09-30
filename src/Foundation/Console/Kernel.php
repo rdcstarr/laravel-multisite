@@ -65,7 +65,7 @@ class Kernel extends \Illuminate\Foundation\Console\Kernel
 			// Reset multisite state for fresh bootstrap
 			MultisiteManager::$currentSite = null;
 
-			collect(['multisite.current_site', 'multisite.bootstrapped', 'path.config.cache'])->each(function ($key)
+			collect(['multisite.current_site', 'multisite.bootstrapped', 'path.config.cache', 'path.routes.cache'])->each(function ($key)
 			{
 				$this->app->bound($key) && $this->app->forgetInstance($key);
 			});

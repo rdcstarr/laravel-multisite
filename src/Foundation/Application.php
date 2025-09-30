@@ -41,4 +41,19 @@ class Application extends \Illuminate\Foundation\Application
 
 		return parent::getCachedConfigPath();
 	}
+
+	/**
+	 * Get the path to the routes cache file.
+	 *
+	 * @return string
+	 */
+	public function getCachedRoutesPath(): string
+	{
+		if ($this->bound('path.routes.cache'))
+		{
+			return $this->make('path.routes.cache');
+		}
+
+		return parent::getCachedRoutesPath();
+	}
 }

@@ -83,7 +83,7 @@ class OptimizeClearCommand extends Command
 			$this->components->task($site, fn() => match (true)
 			{
 				!MultisiteManager::isValid($site) => throw new Exception("Site invalid"),
-				default => Process::run('artisan config:clear --site=' . escapeshellarg($site))->throw()
+				default => Process::run('artisan config:clear --site=' . escapeshellarg($site) . ' && artisan route:clear --site=' . escapeshellarg($site))->throw()
 			});
 		}
 		catch (Exception $e)
@@ -103,7 +103,6 @@ class OptimizeClearCommand extends Command
 			'cache'    => 'cache:clear',
 			'compiled' => 'clear-compiled',
 			'events'   => 'event:clear',
-			'routes'   => 'route:clear',
 			'views'    => 'view:clear',
 			...ServiceProvider::$optimizeClearCommands,
 		];

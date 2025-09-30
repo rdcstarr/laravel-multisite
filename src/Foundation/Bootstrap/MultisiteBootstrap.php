@@ -55,6 +55,7 @@ class MultisiteBootstrap
 
 		// Bind paths and mark as bootstrapped
 		$app->bind('path.config.cache', fn() => MultisiteManager::getCachedConfigPath());
+		$app->bind('path.routes.cache', fn() => MultisiteManager::getCachedRoutesPath());
 		$app->instance('multisite.current_site', $site);
 	}
 
