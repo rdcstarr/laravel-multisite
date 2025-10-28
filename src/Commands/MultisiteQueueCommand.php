@@ -2,6 +2,7 @@
 
 namespace Rdcstarr\Multisite\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Process;
@@ -181,11 +182,8 @@ class MultisiteQueueCommand extends Command
 	/**
 	 * Get queue statistics for the provided sites.
 	 *
-	 * Executes a batched, parallel check for pending/failed jobs per site
-	 * and returns an associative array of statistics for each site.
-	 *
 	 * @param Collection<string> $sites Collection of site identifiers to inspect
-	 * @return array<string,array{pending:int,failed:int,total:int,priority:float}>
+	 * @return array<string,array{pending:int,priority:float}>
 	 */
 	private function getQueueSizes(Collection $sites): array
 	{
@@ -223,13 +221,10 @@ class MultisiteQueueCommand extends Command
 						if ($stats && is_array($stats))
 						{
 							$pending = $stats['pending'] ?? 0;
-							$failed  = $stats['failed'] ?? 0;
 
 							$sizes[$site] = [
 								'pending'  => $pending,
-								'failed'   => $failed,
-								'total'    => $pending + $failed,
-								'priority' => $this->calculatePriority($pending, $failed),
+								'priority' => (float) $pending,
 							];
 						}
 						else
@@ -242,7 +237,7 @@ class MultisiteQueueCommand extends Command
 						$sizes[$site] = $this->getEmptyStats();
 					}
 				}
-				catch (\Exception $e)
+				catch (Exception $e)
 				{
 					$sizes[$site] = $this->getEmptyStats();
 				}
@@ -255,7 +250,7 @@ class MultisiteQueueCommand extends Command
 			}
 		}
 
-		$activeSites = count(array_filter($sizes, fn($s) => $s['total'] > 0));
+		$activeSites = count(array_filter($sizes, fn($s) => $s['pending'] > 0));
 		$this->output("Found {$activeSites} sites with pending jobs", 'info');
 
 		return $sizes;
@@ -264,26 +259,22 @@ class MultisiteQueueCommand extends Command
 	/**
 	 * Return an empty stats structure for a site with no data.
 	 *
-	 * @return array{pending:int,failed:int,total:int,priority:int}
+	 * @return array{pending:int,priority:int}
 	 */
 	private function getEmptyStats(): array
 	{
-		return ['pending' => 0, 'failed' => 0, 'total' => 0, 'priority' => 0];
+		return ['pending' => 0, 'priority' => 0];
 	}
 
 	/**
-	 * Compute a priority score for a site based on pending and failed jobs.
-	 *
-	 * Failed jobs are weighted more heavily to prioritize recovery.
+	 * Compute a priority score.
 	 *
 	 * @param int $pending Number of pending jobs
-	 * @param int $failed Number of failed jobs
 	 * @return float Computed priority score
 	 */
-	private function calculatePriority(int $pending, int $failed): float
+	private function calculatePriority(int $pending): float
 	{
-		// Priority algorithm: pending jobs + failed jobs with higher weight
-		return $pending + $failed * 2;
+		return (float) $pending;
 	}
 
 	/**
@@ -292,18 +283,18 @@ class MultisiteQueueCommand extends Command
 	 * Uses site priority scores to proportionally allocate the total
 	 * available workers while respecting min/max per-site constraints.
 	 *
-	 * @param array<string,array{priority:float,total:int}> $queueSizes Input statistics keyed by site
+	 * @param array<string,array{priority:float}> $queueSizes Input statistics keyed by site
 	 * @return array<string,int> Mapping of site => target worker count
 	 */
 	private function calculateWorkerAllocation(array $queueSizes): array
 	{
-		$allocation    = [];
-		$totalPriority = array_sum(array_column($queueSizes, 'priority'));
+		$allocation = [];
+		$priority   = array_sum(array_column($queueSizes, 'priority'));
 
-		if ($totalPriority == 0)
+		if ($priority == 0)
 		{
 			// No jobs anywhere, distribute evenly among sites with recent activity
-			$activeSites = array_keys(array_filter($queueSizes, fn($s) => $s['total'] > 0));
+			$activeSites = array_keys(array_filter($queueSizes, fn($s) => $s['pending'] > 0));
 			if (empty($activeSites))
 			{
 				return [];
@@ -325,7 +316,7 @@ class MultisiteQueueCommand extends Command
 			if ($stats['priority'] == 0)
 				continue;
 
-			$ratio   = $stats['priority'] / $totalPriority;
+			$ratio   = $stats['priority'] / $priority;
 			$workers = max(
 				$this->option('min-per-site'),
 				min(
